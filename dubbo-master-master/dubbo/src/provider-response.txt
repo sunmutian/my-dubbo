@@ -3,15 +3,15 @@ NettyHandler.messageReceived
     -->MultiMessageHandler.received
       -->HeartbeatHandler.received
         -->AllChannelHandler.received
-          -->ChannelEventRunnable.run //Ïß³Ì³Ø Ö´ĞĞÏß³Ì
+          -->ChannelEventRunnable.run //çº¿ç¨‹æ±  æ‰§è¡Œçº¿ç¨‹
             -->DecodeHandler.received
               -->HeaderExchangeHandler.received
-                -->handleRequest(exchangeChannel, request)//ÍøÂçÍ¨ĞÅ½ÓÊÕ´¦Àí 
+                -->handleRequest(exchangeChannel, request)//ç½‘ç»œé€šä¿¡æ¥æ”¶å¤„ç†
                   -->DubboProtocol.reply
                     -->getInvoker
-                      -->exporterMap.get(serviceKey)//´Ó·şÎñ±©Â¶ÀïÃæÌáÈ¡ 
-                      -->DubboExporter.getInvoker()//×îÖÕµÃµ½Ò»¸öinvoker
--------------------------------------------------------------------------À©Õ¹µã--------------
+                      -->exporterMap.get(serviceKey)//ä»æœåŠ¡æš´éœ²é‡Œé¢æå–
+                      -->DubboExporter.getInvoker()//æœ€ç»ˆå¾—åˆ°ä¸€ä¸ªinvoker
+-------------------------------------------------------------------------æ‰©å±•ç‚¹--------------
                     -->ProtocolFilterWrapper.invoke
                       -->EchoFilter.invoke
                         -->ClassLoaderFilter.invoke
@@ -21,16 +21,15 @@ NettyHandler.messageReceived
                                 -->TimeoutFilter.invoke
                                   -->ExceptionFilter.invoke
                                     -->InvokerWrapper.invoke
--------------------------------------------------------------------------À©Õ¹µã--------------
+-------------------------------------------------------------------------æ‰©å±•ç‚¹--------------
                                       -->AbstractProxyInvoker.invoke
                                         -->JavassistProxyFactory.AbstractProxyInvoker.doInvoke
-                                          --> ½øÈëÕæÕıÖ´ĞĞµÄÊµÏÖÀà   DemoServiceImpl.sayHello
+                                          --> è¿›å…¥çœŸæ­£æ‰§è¡Œçš„å®ç°ç±»   DemoServiceImpl.sayHello
                                         ....................................
-                -->channel.send(response);//°Ñ½ÓÊÕ´¦ÀíµÄ½á¹û£¬·¢ËÍ»ØÈ¥ 
+                -->channel.send(response);//æŠŠæ¥æ”¶å¤„ç†çš„ç»“æœï¼Œå‘é€å›å»
                   -->AbstractPeer.send
                     -->NettyChannel.send
-                      -->ChannelFuture future = channel.write(message);//Êı¾İ·¢»Øconsumer
-                      
-                      
-                      
-                      
+                      -->ChannelFuture future = channel.write(message);//æ•°æ®å‘å›consumer
+
+
+

@@ -1,31 +1,31 @@
 demoService.sayHello("world" + i)
 -->InvokerInvocationHandler.invoke
   -->invoker.invoke
-    -->RpcInvocation//���������������ת��ΪRpcInvocation
-    -->MockClusterInvoker.invoke //1.���뼯Ⱥ
+    -->RpcInvocation//所有请求参数都会转换为RpcInvocation
+    -->MockClusterInvoker.invoke //1.进入集群
       -->invoker.invoke(invocation)
         -->AbstractClusterInvoker.invoke
           -->list(invocation)
-            -->directory.list//2.����Ŀ¼����   ��this.methodInvokerMap�������һ��Invoker
+            -->directory.list//2.进入目录查找   从this.methodInvokerMap里面查找一个Invoker
               -->AbstractDirectory.list
                 -->doList(invocation)
-                  -->RegistryDirectory.doList// ��this.methodInvokerMap�������һ��Invoker
-                -->router.route //3.����·�� 
+                  -->RegistryDirectory.doList// 从this.methodInvokerMap里面查找一个Invoker
+                -->router.route //3.进入路由
                   -->MockInvokersSelector.route
                     -->getNormalInvokers
           -->ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension("roundrobin")
           -->doInvoke
             -->FailoverClusterInvoker.doInvoke
-              -->select//4.���븺�ؾ���
+              -->select//4.进入负载均衡
                 -->AbstractClusterInvoker.select
                   -->doselect
                     -->loadbalance.select
                       -->AbstractLoadBalance.select
                         -->doSelect
                           -->RoundRobinLoadBalance.doSelect
-                            -->invokers.get(currentSequence % length)//ȡģ��ѭ
+                            -->invokers.get(currentSequence % length)//取模轮循
               -->Result result = invoker.invoke(invocation)
---------------------------------------------------------------------------��չ��----------------
+--------------------------------------------------------------------------扩展点----------------
                 -->InvokerWrapper.invoke
                   -->ProtocolFilterWrapper.invoke
                     -->ConsumerContextFilter.invoke
@@ -35,23 +35,23 @@ demoService.sayHello("world" + i)
                             -->FutureFilter.invoke
                               -->ListenerInvokerWrapper.invoke
                                 -->AbstractInvoker.invoke
----------------------------------------------------------------------------��չ��---------------
+---------------------------------------------------------------------------扩展点---------------
                                   -->doInvoke(invocation)
-                                    -->DubboInvoker.doInvoke//ΪʲôDubboInvoker�Ǹ�protocol? ��ΪRegistryDirectory.refreshInvoker.toInvokers�� protocol.refer
+                                    -->DubboInvoker.doInvoke//为什么DubboInvoker是个protocol? 因为RegistryDirectory.refreshInvoker.toInvokers： protocol.refer
                                       -->ReferenceCountExchangeClient.request
                                         -->HeaderExchangeClient.request
                                           -->HeaderExchangeChannel.request
                                             -->NettyClient.send
                                             -->AbstractPeer.send
                                               -->NettyChannel.send
-                                                -->ChannelFuture future = channel.write(message);//���յ�Ŀ�ģ�ͨ��netty��channel������������
-//consumer�Ľ���ԭ�� 
+                                                -->ChannelFuture future = channel.write(message);//最终的目的：通过netty的channel发送网络数据
+//consumer的接收原理
 NettyHandler.messageReceived
   -->AbstractPeer.received
     -->MultiMessageHandler.received
       -->HeartbeatHandler.received
         -->AllChannelHandler.received
-          -->ChannelEventRunnable.run //�̳߳� ִ���߳�
+          -->ChannelEventRunnable.run //线程池 执行线程
             -->DecodeHandler.received
               -->HeaderExchangeHandler.received
                 -->handleResponse(channel, (Response) message);
@@ -81,21 +81,20 @@ NettyHandler.messageReceived
 
 
 
-                  
-                  
 
-�Ҷȷ������ӣ�
+
+
+灰度发布例子：
 provider  192.168.100.38    192.168.48.32
-1.����192.168.48.32���ж�192.168.48.32����������Ȼ����з���ķ�����
-2.192.168.48.32�����ɹ��󣬻ָ� 192.168.48.32��������
+1.发布192.168.48.32，切断192.168.48.32访问流量，然后进行服务的发布。
+2.192.168.48.32发布成功后，恢复 192.168.48.32的流量，
 
-3.�ж�192.168.100.38���������� 192.168.100.38
-                  
-2������
-1.����·�ɹ�������������Щ������
-  a.ʲôʱ�����ConditionRouter��
-  b.ConditionRouter����ô���˵ģ�
-2.·�ɹ�������Щʵ���ࣿ    
-ConditionRouter������·�ɣ���̨������·�����ö�������·�ɡ�
-ScriptRouter���ű�·��       
-              
+3.切断192.168.100.38，继续发布 192.168.100.38
+
+2个疑问
+1.启动路由规则，它触发了那些动作？
+  a.什么时候加入ConditionRouter？
+  b.ConditionRouter是怎么过滤的？
+2.路由规则有哪些实现类？
+ConditionRouter：条件路由，后台管理的路由配置都是条件路由。
+ScriptRouter：脚本路由
